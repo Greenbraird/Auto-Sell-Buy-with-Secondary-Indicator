@@ -2,7 +2,7 @@
 
 Python Auto Sell and Buy for Upbit Api
 
-version = 1.0.0
+version : 1.0.0
 
 ## Documentation
 https://pyupbit.readthedocs.io/en/latest/

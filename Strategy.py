@@ -43,7 +43,7 @@ def strategy_RSI(upbit ,bitcoin, delay_buy_time, bong ,buy_count =4, buy_price =
                 buy_count += 1
 
     if avg_buy_price*volum != 0:
-        if now_rsi >= sell_rsi and now_rsi >=  befer_rsi:
+        if now_rsi >= sell_rsi or befer_rsi >= sell_rsi :
             if rsi_delta < 0:
                 #매도 시점1
                 if buy_count < max_buy_count and avg_buy_price*volum < now_price :

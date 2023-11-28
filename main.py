@@ -46,16 +46,16 @@ class App:
                         self.first_room_rsi_entry_entry.config(state='readonly')
                         self.first_room_rsi_close_entry.config(state='readonly')
                         for coin in self.restore_coin_list:
-                            self.frist_room_bitcoin_dict[coin]['delay_buy_time'],  self.frist_room_bitcoin_dict[coin]['buy_count'] = Strategy.strategy_RSI(self.upbit, 
-                                                                                                                                    coin,
-                                                                                                                                    self.frist_room_bitcoin_dict[coin]['delay_buy_time'],
-                                                                                                                                    self.first_room_bong_combobox.get(),
-                                                                                                                                    self.frist_room_bitcoin_dict[coin]['buy_count'],
-                                                                                                                                    int(self.first_room_price_entry.get()),
-                                                                                                                                    int(self.first_room_count_entry.get()), 
-                                                                                                                                    int(self.first_room_count_time_combobox.get()),
-                                                                                                                                    int(self.first_room_rsi_entry_entry.get()),
-                                                                                                                                    int(self.first_room_rsi_close_entry.get())
+                            self.frist_room_bitcoin_dict[coin]['delay_buy_time'],  self.frist_room_bitcoin_dict[coin]['buy_count'] = Strategy.strategy_RSI(upbit= self.upbit, 
+                                                                                                                                    bitcoin=coin,
+                                                                                                                                    delay_buy_time=self.frist_room_bitcoin_dict[coin]['delay_buy_time'],
+                                                                                                                                    bong=self.first_room_bong_combobox.get(),
+                                                                                                                                    buy_count=self.frist_room_bitcoin_dict[coin]['buy_count'],
+                                                                                                                                    buy_price=int(self.first_room_price_entry.get()),
+                                                                                                                                    max_buy_count=int(self.first_room_count_entry.get()),
+                                                                                                                                    delay_time=int(self.first_room_count_time_combobox.get()),
+                                                                                                                                    buy_rsi=int(self.first_room_rsi_entry_entry.get()),
+                                                                                                                                    sell_rsi=int(self.first_room_rsi_close_entry.get())
                                                                                                                                     )
                 else:
                     self.first_room_price_entry.config(state='normal')

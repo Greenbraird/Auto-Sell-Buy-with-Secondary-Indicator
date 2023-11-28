@@ -2,9 +2,11 @@ import SecondaryIndicator
 import pyupbit
 import time
 
-def strategy_RSI(upbit ,bitcoin, delay_buy_time, bong ,buy_count =4, buy_price =5000,max_buy_count = 4, delay_time = 60, buy_rsi=30, sell_rsi=70):
+def strategy_RSI(upbit ,bitcoin, delay_buy_time, bong ,buy_count , buy_price,max_buy_count, delay_time , buy_rsi, sell_rsi):
 
     my_balances = upbit.get_balances()
+    avg_buy_price = 0
+    volum = 0
     
     #이 친구를 new main으로 빼자
     for i in my_balances:
@@ -12,10 +14,7 @@ def strategy_RSI(upbit ,bitcoin, delay_buy_time, bong ,buy_count =4, buy_price =
         if i['currency'] == bitcoin[4:]:
             avg_buy_price = float(i['avg_buy_price'])
             volum = float(i['balance'])
-        
-        else:
-            avg_buy_price = 0
-            volum = 0
+    
     
     #초기화
     if upbit.get_balance(bitcoin) == 0:
@@ -43,6 +42,7 @@ def strategy_RSI(upbit ,bitcoin, delay_buy_time, bong ,buy_count =4, buy_price =
                 buy_count += 1
 
     if avg_buy_price*volum != 0:
+        
         if now_rsi >= sell_rsi or befer_rsi >= sell_rsi :
             if rsi_delta < 0:
                 #매도 시점1

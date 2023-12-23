@@ -87,5 +87,9 @@ def Bor(bitcoin = "KRW-BTC", bong = 'minute1'):
     df['BandWidth'] = (df['close'] - df['lower']) / df['MA'] * 100
 
 if __name__ == '__main__':
-    print(EMA_RSI(bitcoin = "KRW-BTC", bong = 'minute5', data= 200))
+    sma = SMA(bong="minute5")
+    print(sma.iloc[1,1])
+    print(sma)
+
+
 

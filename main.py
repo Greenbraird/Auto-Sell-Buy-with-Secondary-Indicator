@@ -10,18 +10,20 @@ class App:
     def __init__(self, root):
         self.root = root
         self.creat_title_frame()
+        self.creat_debuging_panel()
         self.creat_head_frame()
         self.creat_body_frame()
         self.checkboxes = {}
         self.restore_coin_list = []
-        self.bitcoinlist = ['KRW-XRP','KRW-BTC','KRW-SOL','KRW-BCH','KRW-ADA','KRW-STMX','KRW-ETC','KRW-STPT','KRW-STEEM','KRW-SBD','KRW-MLK','KRW-GAS','KRW-GRS','KRW-STRK','KRW-HIFI','KRW-BLUR','KRW-STRAX','KRW-ARK','KRW-GRT','KRW-DOGE','KRW-SAND']
-        self.frist_room_bitcoin_dict = {}
+        #['KRW-XRP','KRW-BTC','KRW-SOL','KRW-BCH','KRW-ADA','KRW-STMX','KRW-ETC','KRW-STPT','KRW-STEEM','KRW-SBD','KRW-MLK','KRW-GAS','KRW-GRS','KRW-STRK','KRW-HIFI','KRW-BLUR','KRW-STRAX','KRW-ARK','KRW-GRT','KRW-DOGE','KRW-SAND']
+        self.bitcoinlist = pyupbit.get_tickers(fiat="KRW")[:50]
+        self.first_room_bitcoin_dict = {}
         self.second_room_bitcoin_dict = {}
         self.third_room_bitcoin_dict = {}
         self.fourth_room_bitcoin_dict = {}
 
         for i in self.bitcoinlist:
-            self.frist_room_bitcoin_dict[i] = {'delay_buy_time': 0 , 'buy_count':0}
+            self.first_room_bitcoin_dict[i] = {'delay_buy_time': 0 , 'buy_count':0}
             self.second_room_bitcoin_dict[i] = {'delay_buy_time': 0 , 'buy_count':0}
             self.third_room_bitcoin_dict[i] = {'delay_buy_time': 0 , 'buy_count':0}
             self.fourth_room_bitcoin_dict[i] = {'delay_buy_time': 0 , 'buy_count':0}
@@ -29,129 +31,99 @@ class App:
         self.open_new_window()
 
         #백그라운드 스레드 생성
-        self.background_thread = threading.Thread(target=self.start_strategy)
+        self.background_thread = threading.Thread(target=self.buy_start_strategy)
         self.background_thread.daemon = True  # 메인 스레드가 종료되면 백그라운드 스레드도 종료되도록 설정
         self.background_thread.start()
 
+        self.background_thread2 = threading.Thread(target=self.sell_start_strategy)
+        self.background_thread2.daemon = True  # 메인 스레드가 종료되면 백그라운드 스레드도 종료되도록 설정
+        self.background_thread2.start()
+
         self.root.mainloop()
 
-    def start_strategy(self):
-        while True:  # 무한 루프로 백그라운드 작업 수행
-            if len(self.restore_coin_list) != 0:
-                if self.first_room_is_auto == 0:
-                    self.first_room_label.config(bg='green')
-                    if int(time.strftime('%M',time.localtime()))%int(self.first_room_bong_combobox.get()[-1]) == 0:
-                        self.first_room_price_entry.config(state='readonly')
-                        self.first_room_count_entry.config(state='readonly')
-                        self.first_room_rsi_entry_entry.config(state='readonly')
-                        self.first_room_rsi_close_entry.config(state='readonly')
-                        for coin in self.restore_coin_list:
-                            self.frist_room_bitcoin_dict[coin]['delay_buy_time'],  self.frist_room_bitcoin_dict[coin]['buy_count'] = Strategy.strategy_RSI(upbit= self.upbit, 
-                                                                                                                                    bitcoin=coin,
-                                                                                                                                    delay_buy_time=self.frist_room_bitcoin_dict[coin]['delay_buy_time'],
-                                                                                                                                    bong=self.first_room_bong_combobox.get(),
-                                                                                                                                    buy_count=self.frist_room_bitcoin_dict[coin]['buy_count'],
-                                                                                                                                    buy_price=int(self.first_room_price_entry.get()),
-                                                                                                                                    max_buy_count=int(self.first_room_count_entry.get()),
-                                                                                                                                    delay_time=int(self.first_room_count_time_combobox.get()),
-                                                                                                                                    buy_rsi=int(self.first_room_rsi_entry_entry.get()),
-                                                                                                                                    sell_rsi=int(self.first_room_rsi_close_entry.get())
-                                                                                                                                    )
-                else:
-                    self.first_room_price_entry.config(state='normal')
-                    self.first_room_count_entry.config(state='normal')
-                    self.first_room_rsi_entry_entry.config(state='normal')
-                    self.first_room_rsi_close_entry.config(state='normal')
-                    self.first_room_label.config(bg='yellow')
-            else:
-                self.first_room_label.config(bg='red')
-                
-            if len(self.restore_coin_list) != 0:
-                if self.second_room_is_auto == 0:
-                    self.second_room_label.config(bg='green')
-                    if int(time.strftime('%M',time.localtime()))%int(self.second_room_bong_combobox.get()[6:]) == 0:
-                        self.second_room_price_entry.config(state='readonly')
-                        self.second_room_count_entry.config(state='readonly')
-                        self.second_room_rsi_entry_entry.config(state='readonly')
-                        self.second_room_rsi_close_entry.config(state='readonly')
-                        for coin in self.restore_coin_list:
-                            self.second_room_bitcoin_dict[coin]['delay_buy_time'],  self.second_room_bitcoin_dict[coin]['buy_count'] = Strategy.strategy_RSI(self.upbit, 
-                                                                                                                                    coin,
-                                                                                                                                    self.second_room_bitcoin_dict[coin]['delay_buy_time'],
-                                                                                                                                    self.second_room_bong_combobox.get(),
-                                                                                                                                    self.second_room_bitcoin_dict[coin]['buy_count'],
-                                                                                                                                    int(self.second_room_price_entry.get()),
-                                                                                                                                    int(self.second_room_count_entry.get()), 
-                                                                                                                                    int(self.second_room_count_time_combobox.get()),
-                                                                                                                                    int(self.second_room_rsi_entry_entry.get()),
-                                                                                                                                    int(self.second_room_rsi_close_entry.get())
-                                                                                                                                    )
-                else:
-                    self.second_room_price_entry.config(state='normal')
-                    self.second_room_count_entry.config(state='normal')
-                    self.second_room_rsi_entry_entry.config(state='normal')
-                    self.second_room_rsi_close_entry.config(state='normal')
-                    self.second_room_label.config(bg='yellow')
-            else:
-                self.second_room_label.config(bg='red')
 
-            if len(self.restore_coin_list) != 0:
-                if self.third_room_is_auto == 0:
-                    self.third_room_label.config(bg='green')
-                    if int(time.strftime('%M',time.localtime()))%int(self.third_room_bong_combobox.get()[6:]) == 0:
-                        self.third_room_price_entry.config(state='readonly')
-                        self.third_room_count_entry.config(state='readonly')
-                        self.third_room_rsi_entry_entry.config(state='readonly')
-                        self.third_room_rsi_close_entry.config(state='readonly')
-                        for coin in self.restore_coin_list:
-                            self.third_room_bitcoin_dict[coin]['delay_buy_time'],  self.third_room_bitcoin_dict[coin]['buy_count'] = Strategy.strategy_RSI(self.upbit, 
-                                                                                                                                    coin,
-                                                                                                                                    self.third_room_bitcoin_dict[coin]['delay_buy_time'],
-                                                                                                                                    self.third_room_bong_combobox.get(),
-                                                                                                                                    self.third_room_bitcoin_dict[coin]['buy_count'],
-                                                                                                                                    int(self.third_room_price_entry.get()),
-                                                                                                                                    int(self.third_room_count_entry.get()), 
-                                                                                                                                    int(self.third_room_count_time_combobox.get()),
-                                                                                                                                    int(self.third_room_rsi_entry_entry.get()),
-                                                                                                                                    int(self.third_room_rsi_close_entry.get())
-                                                                                                                                    )
-                else:
-                    self.third_room_price_entry.config(state='normal')
-                    self.third_room_count_entry.config(state='normal')
-                    self.third_room_rsi_entry_entry.config(state='normal')
-                    self.third_room_rsi_close_entry.config(state='normal')
-                    self.third_room_label.config(bg='yellow')
+    def buy_process_room(self, room_label, is_auto, bong_entry_combobox, price_entry, count_entry, rsi_entry_entry, count_time,bitcoin_dict,log_panel):
+        if len(self.restore_coin_list) != 0:
+            if is_auto == 0:
+                room_label.config(bg='green')
+                if int(time.strftime('%M', time.localtime())) % int(bong_entry_combobox.get()[6:]) == 0: #60이런 것 들은 처리를 못함
+                    price_entry.config(state='readonly')
+                    count_entry.config(state='readonly')
+                    rsi_entry_entry.config(state='readonly')
+                    for coin in self.restore_coin_list:
+                        bitcoin_dict[coin]['delay_buy_time'], bitcoin_dict[coin]['buy_count'] = Strategy.strategy_buy_RSI_and_EMA(
+                            self.upbit,
+                            coin,
+                            bitcoin_dict[coin]['delay_buy_time'],
+                            bong_entry_combobox.get(),
+                            int(rsi_entry_entry.get()),
+                            bitcoin_dict[coin]['buy_count'],
+                            int(price_entry.get()),
+                            int(count_entry.get()),
+                            int(count_time.get()),
+                            log_panel,
+                    )
             else:
-                self.third_room_label.config(bg='red')
-            
-            if len(self.restore_coin_list) != 0:
-                if self.fourth_room_is_auto == 0:
-                    self.fourth_room_label.config(bg='green')
-                    if time.strftime('%H',time.localtime()) in ['01','05','09','13','17','21']  == 0:
-                        self.fourth_room_price_entry.config(state='readonly')
-                        self.fourth_room_count_entry.config(state='readonly')
-                        self.fourth_room_rsi_entry_entry.config(state='readonly')
-                        self.fourth_room_rsi_close_entry.config(state='readonly')
-                        for coin in self.restore_coin_list:
-                            self.fourth_room_bitcoin_dict[coin]['delay_buy_time'],  self.fourth_room_bitcoin_dict[coin]['buy_count'] = Strategy.strategy_RSI(self.upbit, 
-                                                                                                                                    coin,
-                                                                                                                                    self.fourth_room_bitcoin_dict[coin]['delay_buy_time'],
-                                                                                                                                    self.fourth_room_bong_combobox.get(),
-                                                                                                                                    self.fourth_room_bitcoin_dict[coin]['buy_count'],
-                                                                                                                                    int(self.fourth_room_price_entry.get()),
-                                                                                                                                    int(self.fourth_room_count_entry.get()), 
-                                                                                                                                    int(self.fourth_room_count_time_combobox.get()),
-                                                                                                                                    int(self.fourth_room_rsi_entry_entry.get()),
-                                                                                                                                    int(self.fourth_room_rsi_close_entry.get())
-                                                                                                                                    )
-                else:
-                    self.fourth_room_price_entry.config(state='normal')
-                    self.fourth_room_count_entry.config(state='normal')
-                    self.fourth_room_rsi_entry_entry.config(state='normal')
-                    self.fourth_room_rsi_close_entry.config(state='normal')
-                    self.fourth_room_label.config(bg='yellow')
+                price_entry.config(state='normal')
+                count_entry.config(state='normal')
+                rsi_entry_entry.config(state='normal')
+                room_label.config(bg='yellow')
+        else:
+            room_label.config(bg='red')
+
+    def buy_start_strategy(self):
+        while True:
+            self.buy_process_room(self.first_room_label, self.first_room_is_auto, self.first_room_bong_entry_combobox,
+                                self.first_room_price_entry, self.first_room_count_entry, self.first_room_rsi_entry_entry,
+                                self.first_room_count_time_combobox, self.first_room_bitcoin_dict,self.debug_panel)
+
+            self.buy_process_room(self.second_room_label, self.second_room_is_auto, self.second_room_bong_entry_combobox,
+                               self.second_room_price_entry, self.second_room_count_entry, self.second_room_rsi_entry_entry,
+                                self.second_room_count_time_combobox, self.second_room_bitcoin_dict,self.debug_panel)
+
+            self.buy_process_room(self.third_room_label, self.third_room_is_auto, self.third_room_bong_entry_combobox,
+                               self.third_room_price_entry, self.third_room_count_entry, self.third_room_rsi_entry_entry,
+                                self.third_room_count_time_combobox, self.third_room_bitcoin_dict,self.debug_panel)
+
+            self.buy_process_room(self.fourth_room_label, self.fourth_room_is_auto, self.fourth_room_bong_entry_combobox,
+                               self.fourth_room_price_entry, self.fourth_room_count_entry,self.fourth_room_rsi_entry_entry,
+                                self.fourth_room_count_time_combobox, self.fourth_room_bitcoin_dict,self.debug_panel)
+
+            time.sleep(1)
+
+    def sell_process_room(self,room_label,is_auto,bong_close_combobox,rsi_close_entry,bitcoin_dict,log_panel):
+         if len(self.restore_coin_list) != 0:
+            if is_auto == 0:
+                room_label.config(bg='green')
+                if int(time.strftime('%M', time.localtime())) % int(bong_close_combobox.get()[6:]) == 0: #60이런 것 들은 처리를 못함
+                    rsi_close_entry.config(state='readonly')
+                    for coin in self.restore_coin_list:
+                        bitcoin_dict[coin]['delay_buy_time'], bitcoin_dict[coin]['buy_count'] = Strategy.strategy_sell_RSI_and_EMA(
+                            self.upbit,
+                            coin,
+                            bitcoin_dict[coin]['delay_buy_time'],
+                            bong_close_combobox.get(),
+                            int(rsi_close_entry.get()),
+                            bitcoin_dict[coin]['buy_count'],
+                            log_panel,
+                    )
             else:
-                self.fourth_room_label.config(bg='red')
+                rsi_close_entry.config(state='normal')
+                room_label.config(bg='yellow')
+    
+    def sell_start_strategy(self):
+        while True:
+            self.sell_process_room(self.first_room_label, self.first_room_is_auto, self.first_room_bong_close_combobox,
+                                self.first_room_rsi_close_entry, self.first_room_bitcoin_dict,self.debug_panel)
+
+            self.sell_process_room(self.second_room_label, self.second_room_is_auto, self.second_room_bong_close_combobox,
+                                self.second_room_rsi_close_entry, self.second_room_bitcoin_dict,self.debug_panel)
+
+            self.sell_process_room(self.third_room_label, self.third_room_is_auto, self.third_room_bong_close_combobox,
+                                self.third_room_rsi_close_entry, self.third_room_bitcoin_dict,self.debug_panel)
+
+            self.sell_process_room(self.fourth_room_label, self.fourth_room_is_auto, self.fourth_room_bong_close_combobox,
+                                self.fourth_room_rsi_close_entry, self.fourth_room_bitcoin_dict,self.debug_panel)
 
             time.sleep(1)
 
@@ -184,7 +156,7 @@ class App:
                 current_box.grid(row=Cbrow, column=Cbcolumn)
                 
                 self.checkboxes[current_box] = name 
-                if Cbcolumn == 2:
+                if Cbcolumn == 4:
                         Cbcolumn = 0
                         Cbrow += 1
                 else:
@@ -195,7 +167,7 @@ class App:
                      current_box.select()
         
         print_cbox_button = tk.Button(self.new_window, text='적용', command=self.get_checked_boxes)
-        print_cbox_button.grid(row=20, column=0, columnspan=3)
+        print_cbox_button.grid(row=20, column=0, columnspan=5)
 
     def get_balance(self):
         self.upbit = pyupbit.Upbit(self.access_entry.get(), self.secret_entry.get())
@@ -206,7 +178,22 @@ class App:
         titleF.pack(fill='x', padx=2, pady=2)
         
         p_name_label = tk.Label(titleF, text="Auto Upbit Sell Buy").pack(fill='x', padx=2, pady=2,side='left')
-        coin_list_btn = tk.Button(titleF, text="Coin List", command=self.open_new_window).pack(fill='x', padx=2, pady=2,side='right')  
+        coin_list_btn = tk.Button(titleF, text="Coin List", command=self.open_new_window).pack(fill='x', padx=2, pady=2,side='right')
+
+    def creat_debuging_panel(self):
+        
+        debug_panelF = tk.Frame(self.root, relief='solid',bd=2)
+        debug_panelF.pack(fill='x', padx=2,pady=2)
+
+        debug_panel_scrollbar = tk.Scrollbar(debug_panelF)
+        debug_panel_scrollbar.pack(side="right", fill="y")
+
+        self.debug_panel = tk.Text(debug_panelF,height=15)
+        self.debug_panel.pack(fill='x', padx=2,pady=2)
+
+        debug_panel_scrollbar["command"] = self.debug_panel.yview
+        self.debug_panel.insert(tk.END,'test')
+
     
     def creat_head_frame(self):
         headF = tk.Frame(self.root, relief='solid', bd=2)
@@ -232,6 +219,7 @@ class App:
         bodyF = tk.Frame(self.root, bd=2)
         bodyF.pack(fill='x', padx=2, pady=2)
         
+        close_bong_combobox_valuse = ['minute3','minute5','minute10','minute15','minute30','minute60']
         #--------------------------------
         #----------first frame-----------
         #--------------------------------
@@ -243,11 +231,16 @@ class App:
         self.first_room_label.pack(fill='x', padx=2, pady=2, side= 'left')
 
 
-        first_room_bong_lable = tk.Label(first_roomF, text = "분봉").pack(fill='x', padx=2, pady=2, side='left')
+        first_room_bong_entry_lable = tk.Label(first_roomF, text = "매수 분봉").pack(fill='x', padx=2, pady=2, side='left')
         min_bong_combobox_values = ['minute1','minute3','minute5']
-        self.first_room_bong_combobox = ttk.Combobox(first_roomF,width=10,values=min_bong_combobox_values,state='readonly')
-        self.first_room_bong_combobox.pack(fill='x', padx=2, pady=2, side='left')
-        self.first_room_bong_combobox.current(0)
+        self.first_room_bong_entry_combobox = ttk.Combobox(first_roomF,width=10,values=min_bong_combobox_values,state='readonly')
+        self.first_room_bong_entry_combobox.pack(fill='x', padx=2, pady=2, side='left')
+        self.first_room_bong_entry_combobox.current(1)
+
+        first_room_bong_close_lable = tk.Label(first_roomF, text = "매도 분봉").pack(fill='x', padx=2, pady=2, side='left')
+        self.first_room_bong_close_combobox = ttk.Combobox(first_roomF,width=10,values=close_bong_combobox_valuse,state='readonly')
+        self.first_room_bong_close_combobox.pack(fill='x', padx=2, pady=2, side='left')
+        self.first_room_bong_close_combobox.current(1)
         
         first_room_price_label = tk.Label(first_roomF, text = "매수 가격").pack(fill='x', padx=2, pady=2, side='left')
         self.first_room_price_entry = tk.Entry(first_roomF, width=7)
@@ -269,7 +262,7 @@ class App:
         first_room_count_time_list = [40,50,60,70,80]
         self.first_room_count_time_combobox = ttk.Combobox(first_roomF, width=3,values=first_room_count_time_list,state='readonly')
         self.first_room_count_time_combobox.pack(fill='x', padx=2, pady=2, side='left')
-        self.first_room_count_time_combobox.current(2)
+        self.first_room_count_time_combobox.current(1)
 
         
         def first_room_check():
@@ -295,11 +288,16 @@ class App:
         self.second_room_label.pack(fill='x', padx=2, pady=2, side= 'left')
 
 
-        second_room_bong_lable = tk.Label(second_roomF, text = "분봉").pack(fill='x', padx=2, pady=2, side='left')
-        min_bong_combobox_values = ['minute10','minute15']
-        self.second_room_bong_combobox = ttk.Combobox(second_roomF,width=10,values=min_bong_combobox_values,state='readonly')
-        self.second_room_bong_combobox.pack(fill='x', padx=2, pady=2, side='left')
-        self.second_room_bong_combobox.current(0)
+        second_room_bong_entry_lable = tk.Label(second_roomF, text = "매수 분봉").pack(fill='x', padx=2, pady=2, side='left')
+        min_bong_combobox_values = ['minute3','minute5','minute10','minute15']
+        self.second_room_bong_entry_combobox = ttk.Combobox(second_roomF,width=10,values=min_bong_combobox_values,state='readonly')
+        self.second_room_bong_entry_combobox.pack(fill='x', padx=2, pady=2, side='left')
+        self.second_room_bong_entry_combobox.current(0)
+
+        second_room_bong_close_lable = tk.Label(second_roomF, text = "매도 분봉").pack(fill='x', padx=2, pady=2, side='left')
+        self.second_room_bong_close_combobox = ttk.Combobox(second_roomF,width=10,values=close_bong_combobox_valuse,state='readonly')
+        self.second_room_bong_close_combobox.pack(fill='x', padx=2, pady=2, side='left')
+        self.second_room_bong_close_combobox.current(1)
         
         second_room_price_label = tk.Label(second_roomF, text = "매수 가격").pack(fill='x', padx=2, pady=2, side='left')
         self.second_room_price_entry = tk.Entry(second_roomF, width=7)
@@ -346,12 +344,16 @@ class App:
         self.third_room_label = tk.Label(third_roomF, text = "3번방",bg = 'red')
         self.third_room_label.pack(fill='x', padx=2, pady=2, side= 'left')
 
+        third_room_bong_entry_lable = tk.Label(third_roomF, text = "매수 분봉").pack(fill='x', padx=2, pady=2, side='left')
+        min_bong_combobox_values = ['minute5','minute10','minute15','minute30','minute60']
+        self.third_room_bong_entry_combobox = ttk.Combobox(third_roomF,width=10,values=min_bong_combobox_values,state='readonly')
+        self.third_room_bong_entry_combobox.pack(fill='x', padx=2, pady=2, side='left')
+        self.third_room_bong_entry_combobox.current(0)
 
-        third_room_bong_lable = tk.Label(third_roomF, text = "분봉").pack(fill='x', padx=2, pady=2, side='left')
-        min_bong_combobox_values = ['minute15','minute30','minute60']
-        self.third_room_bong_combobox = ttk.Combobox(third_roomF,width=10,values=min_bong_combobox_values,state='readonly')
-        self.third_room_bong_combobox.pack(fill='x', padx=2, pady=2, side='left')
-        self.third_room_bong_combobox.current(0)
+        third_room_bong_close_lable = tk.Label(third_roomF, text = "매도 분봉").pack(fill='x', padx=2, pady=2, side='left')
+        self.third_room_bong_close_combobox = ttk.Combobox(third_roomF,width=10,values=close_bong_combobox_valuse,state='readonly')
+        self.third_room_bong_close_combobox.pack(fill='x', padx=2, pady=2, side='left')
+        self.third_room_bong_close_combobox.current(0)
         
         third_room_price_label = tk.Label(third_roomF, text = "매수 가격").pack(fill='x', padx=2, pady=2, side='left')
         self.third_room_price_entry = tk.Entry(third_roomF, width=7)
@@ -400,12 +402,18 @@ class App:
         self.fourth_room_label.pack(fill='x', padx=2, pady=2, side= 'left')
 
 
-        fourth_room_bong_lable = tk.Label(fourth_roomF, text = "분봉").pack(fill='x', padx=2, pady=2, side='left')
-        min_bong_combobox_values = ['minute240']
-        self.fourth_room_bong_combobox = ttk.Combobox(fourth_roomF,width=10,values=min_bong_combobox_values,state='readonly')
-        self.fourth_room_bong_combobox.pack(fill='x', padx=2, pady=2, side='left')
-        self.fourth_room_bong_combobox.current(0)
-        
+        fourth_room_bong_entry_lable = tk.Label(fourth_roomF, text = "매수 분봉").pack(fill='x', padx=2, pady=2, side='left')
+        min_bong_combobox_values = ['minute30', 'minute60']
+        self.fourth_room_bong_entry_combobox = ttk.Combobox(fourth_roomF,width=10,values=min_bong_combobox_values,state='readonly')
+        self.fourth_room_bong_entry_combobox.pack(fill='x', padx=2, pady=2, side='left')
+        self.fourth_room_bong_entry_combobox.current(0)
+
+        fourth_room_bong_close_lable = tk.Label(fourth_roomF, text = "매도 분봉").pack(fill='x', padx=2, pady=2, side='left')
+        self.fourth_room_bong_close_combobox = ttk.Combobox(fourth_roomF,width=10,values=close_bong_combobox_valuse,state='readonly')
+        self.fourth_room_bong_close_combobox.pack(fill='x', padx=2, pady=2, side='left')
+        self.fourth_room_bong_close_combobox.current(0)
+
+
         fourth_room_price_label = tk.Label(fourth_roomF, text = "매수 가격").pack(fill='x', padx=2, pady=2, side='left')
         self.fourth_room_price_entry = tk.Entry(fourth_roomF, width=7)
         self.fourth_room_price_entry.pack(fill='x', padx=2, pady=2, side='left')
@@ -423,7 +431,7 @@ class App:
         self.fourth_room_count_entry.pack(fill='x', padx=2, pady=2 , side= 'left')
 
         fourth_room_count_time_label = tk.Label(fourth_roomF, text='딜레이 시간').pack(fill='x', padx=2, pady=2, side= 'left')
-        fourth_room_count_time_list = [240]
+        fourth_room_count_time_list = [60,120,180,240]
         self.fourth_room_count_time_combobox = ttk.Combobox(fourth_roomF, width=3,values=fourth_room_count_time_list,state='readonly')
         self.fourth_room_count_time_combobox.pack(fill='x', padx=2, pady=2, side='left')
         self.fourth_room_count_time_combobox.current(0)

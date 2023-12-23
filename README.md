@@ -2,7 +2,8 @@
 
 Python Auto Sell and Buy for Upbit Api
 
-version : 1.0.0
+version : 2.0.0
+2.0.0 추가 기능: 실시간 로그창, 매도 분봉과 매수 분봉 분리
 
 ## Documentation
 https://pyupbit.readthedocs.io/en/latest/

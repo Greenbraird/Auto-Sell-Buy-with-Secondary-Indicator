@@ -17,10 +17,13 @@ class App:
         self.restore_coin_list = []
         #['KRW-XRP','KRW-BTC','KRW-SOL','KRW-BCH','KRW-ADA','KRW-STMX','KRW-ETC','KRW-STPT','KRW-STEEM','KRW-SBD','KRW-MLK','KRW-GAS','KRW-GRS','KRW-STRK','KRW-HIFI','KRW-BLUR','KRW-STRAX','KRW-ARK','KRW-GRT','KRW-DOGE','KRW-SAND']
         self.bitcoinlist = pyupbit.get_tickers(fiat="KRW")[:50]
+        self.except_bitcoin = []
         self.first_room_bitcoin_dict = {}
         self.second_room_bitcoin_dict = {}
         self.third_room_bitcoin_dict = {}
         self.fourth_room_bitcoin_dict = {}
+
+        self.except_coin_delay_tiem_list =[]
 
         for i in self.bitcoinlist:
             self.first_room_bitcoin_dict[i] = {'delay_buy_time': 0 , 'buy_count':0}
@@ -39,14 +42,62 @@ class App:
         self.background_thread2.daemon = True  # 메인 스레드가 종료되면 백그라운드 스레드도 종료되도록 설정
         self.background_thread2.start()
 
+        self.background_thread3 = threading.Thread(target=self.checking_bitcoin)
+        self.background_thread3.daemon = True
+
         self.root.mainloop()
 
+    def checking_bitcoin(self):
+        while True:
+            
+            if time.strftime('%M',time.localtime()) == "00" :
+                if len(self.except_bitcoin) != 0:
+                    count = 0
+                    while len(self.except_bitcoin) != count:
+                        date = time.strftime("%Y%m%d",time.localtime())
+
+                        #어제 값 
+                        close = pyupbit.get_ohlcv(self.except_bitcoin[count], interval="day",to=date)[['close']].tail(1)
+
+                        #오늘 값
+                        today = pyupbit.get_ohlcv(self.except_bitcoin[count], interval="day")[['close']].tail(1)
+                        delta = round((today.iloc[0,0] - close.iloc[0,0]) / close.iloc[0,0] * 100, 3)
+                        if delta < -10:
+                            self.bitcoinlist.append(self.except_bitcoin.pop(count))
+                            self.except_coin_delay_tiem_list.pop(count)
+                        elif self.except_coin_delay_tiem_list[count] <= int(date) :
+                            self.bitcoinlist.append(self.except_bitcoin.pop(count))
+                            self.except_coin_delay_tiem_list.pop(count)
+
+                        else: count += 1 
+                
+                if  len(self.bitcoinlist) != 0 :
+                    count = 0
+                    while len(self.bitcoinlist) != count:
+                        date = time.strftime("%Y%m%d",time.localtime())
+
+                        #어제 값 
+                        close = pyupbit.get_ohlcv(self.bitcoinlist[count], interval="day",to=date)[['close']].tail(1)
+
+                        #오늘 값
+                        today = pyupbit.get_ohlcv(self.bitcoinlist[count], interval="day")[['high']].tail(1)
+                        delta = round((today.iloc[0,0] - close.iloc[0,0]) / close.iloc[0,0] * 100, 3)
+                        if delta > 10 :
+                            log = self.bitcoinlist.pop(count) + "가 " + "장 상승으로 인하여 잠시 거래 중지합니다.\n"
+                            self.debug_panel.insert(tk.END,log)
+                            self.upbit.sell_market_order(self.bitcoinlist, self.upbit.get_balance(self.bitcoinlist))
+                            self.except_bitcoin.append(self.bitcoinlist.pop(count))
+
+                            self.except_coin_delay_tiem_list.append(int(date) + 2)
+                        
+                        else: count += 1
+            time.sleep(30)
 
     def buy_process_room(self, room_label, is_auto, bong_entry_combobox, price_entry, count_entry, rsi_entry_entry, count_time,bitcoin_dict,log_panel):
         if len(self.restore_coin_list) != 0:
             if is_auto == 0:
                 room_label.config(bg='green')
-                if int(time.strftime('%M', time.localtime())) % int(bong_entry_combobox.get()[6:]) == 0: #60이런 것 들은 처리를 못함
+                if int(time.strftime('%M', time.localtime())) % int(bong_entry_combobox.get()[6:]) == 0 or bong_entry_combobox.get()[6:] == '60': #60이런 것 들은 처리를 못함
                     price_entry.config(state='readonly')
                     count_entry.config(state='readonly')
                     rsi_entry_entry.config(state='readonly')
@@ -73,29 +124,31 @@ class App:
 
     def buy_start_strategy(self):
         while True:
-            self.buy_process_room(self.first_room_label, self.first_room_is_auto, self.first_room_bong_entry_combobox,
-                                self.first_room_price_entry, self.first_room_count_entry, self.first_room_rsi_entry_entry,
-                                self.first_room_count_time_combobox, self.first_room_bitcoin_dict,self.debug_panel)
-
-            self.buy_process_room(self.second_room_label, self.second_room_is_auto, self.second_room_bong_entry_combobox,
-                               self.second_room_price_entry, self.second_room_count_entry, self.second_room_rsi_entry_entry,
-                                self.second_room_count_time_combobox, self.second_room_bitcoin_dict,self.debug_panel)
-
-            self.buy_process_room(self.third_room_label, self.third_room_is_auto, self.third_room_bong_entry_combobox,
-                               self.third_room_price_entry, self.third_room_count_entry, self.third_room_rsi_entry_entry,
-                                self.third_room_count_time_combobox, self.third_room_bitcoin_dict,self.debug_panel)
 
             self.buy_process_room(self.fourth_room_label, self.fourth_room_is_auto, self.fourth_room_bong_entry_combobox,
                                self.fourth_room_price_entry, self.fourth_room_count_entry,self.fourth_room_rsi_entry_entry,
                                 self.fourth_room_count_time_combobox, self.fourth_room_bitcoin_dict,self.debug_panel)
+            
+            self.buy_process_room(self.second_room_label, self.second_room_is_auto, self.second_room_bong_entry_combobox,
+                               self.second_room_price_entry, self.second_room_count_entry, self.second_room_rsi_entry_entry,
+                                self.second_room_count_time_combobox, self.second_room_bitcoin_dict,self.debug_panel)
 
+
+            self.buy_process_room(self.third_room_label, self.third_room_is_auto, self.third_room_bong_entry_combobox,
+                               self.third_room_price_entry, self.third_room_count_entry, self.third_room_rsi_entry_entry,
+                                self.third_room_count_time_combobox, self.third_room_bitcoin_dict,self.debug_panel)
+            
+            self.buy_process_room(self.first_room_label, self.first_room_is_auto, self.first_room_bong_entry_combobox,
+                                self.first_room_price_entry, self.first_room_count_entry, self.first_room_rsi_entry_entry,
+                                self.first_room_count_time_combobox, self.first_room_bitcoin_dict,self.debug_panel)
+            
             time.sleep(1)
 
     def sell_process_room(self,room_label,is_auto,bong_close_combobox,rsi_close_entry,bitcoin_dict,log_panel):
          if len(self.restore_coin_list) != 0:
             if is_auto == 0:
                 room_label.config(bg='green')
-                if int(time.strftime('%M', time.localtime())) % int(bong_close_combobox.get()[6:]) == 0: #60이런 것 들은 처리를 못함
+                if int(time.strftime('%M', time.localtime())) % int(bong_close_combobox.get()[6:]) == 0 or bong_close_combobox.get()[6:] == '60': 
                     rsi_close_entry.config(state='readonly')
                     for coin in self.restore_coin_list:
                         bitcoin_dict[coin]['delay_buy_time'], bitcoin_dict[coin]['buy_count'] = Strategy.strategy_sell_RSI_and_EMA(
@@ -136,6 +189,8 @@ class App:
                         self.restore_coin_list.append(self.checkboxes[box])
         
         self.new_window.destroy()
+        log = str(self.restore_coin_list) + " 총 " + str(len(self.restore_coin_list)) + "개를 선택하셨습니다.\n"
+        self.debug_panel.insert(tk.END,log)
         
         print(self.restore_coin_list)    # debug
 
@@ -172,6 +227,10 @@ class App:
     def get_balance(self):
         self.upbit = pyupbit.Upbit(self.access_entry.get(), self.secret_entry.get())
         self.balance_label.config(text = self.upbit.get_balance("KRW"))
+        self.background_thread3.start()
+        log = time.strftime('%H:%M:%S',time.localtime()) + ' ' + '로그인이 완료 되었습니다.\n'
+        self.debug_panel.insert(tk.END,log)
+
     def creat_title_frame(self):
 
         titleF = tk.Frame(self.root, relief='solid', bd=2)
@@ -192,8 +251,7 @@ class App:
         self.debug_panel.pack(fill='x', padx=2,pady=2)
 
         debug_panel_scrollbar["command"] = self.debug_panel.yview
-        self.debug_panel.insert(tk.END,'test')
-
+        
     
     def creat_head_frame(self):
         headF = tk.Frame(self.root, relief='solid', bd=2)
@@ -448,6 +506,67 @@ class App:
         nonautobutton = tk.Radiobutton(fourth_roomF, text="중지", value=1, variable=fourth_is_auto, command=fourth_room_check)
         nonautobutton.pack(fill='x', padx=2, pady=2, side= 'left')
         nonautobutton.invoke()
+
+        bodyF = tk.Frame(self.root, bd=2)
+        bodyF.pack(fill='x', padx=2, pady=2)
+        """
+        #--------------------------------
+        #----------Special frame---------
+        #--------------------------------
+
+        special_roomF = tk.Frame(bodyF, relief='solid', bd=2)
+        special_roomF.pack(fill='x', padx=2, pady=2)
+
+        self.special_room_label = tk.Label(special_roomF, text = "SBD방",bg = 'red')
+        self.special_room_label.pack(fill='x', padx=2, pady=2, side= 'left')
+
+
+        special_room_bong_entry_lable = tk.Label(special_roomF, text = "매수 분봉").pack(fill='x', padx=2, pady=2, side='left')
+        min_bong_combobox_values = ['minute1','minute3','minute5']
+        self.special_room_bong_entry_combobox = ttk.Combobox(special_roomF,width=10,values=min_bong_combobox_values,state='readonly')
+        self.special_room_bong_entry_combobox.pack(fill='x', padx=2, pady=2, side='left')
+        self.special_room_bong_entry_combobox.current(1)
+
+        special_room_bong_close_lable = tk.Label(special_roomF, text = "매도 분봉").pack(fill='x', padx=2, pady=2, side='left')
+        self.special_room_bong_close_combobox = ttk.Combobox(special_roomF,width=10,values=close_bong_combobox_valuse,state='readonly')
+        self.special_room_bong_close_combobox.pack(fill='x', padx=2, pady=2, side='left')
+        self.special_room_bong_close_combobox.current(1)
+        
+        special_room_price_label = tk.Label(special_roomF, text = "매수 가격").pack(fill='x', padx=2, pady=2, side='left')
+        self.special_room_price_entry = tk.Entry(special_roomF, width=7)
+        self.special_room_price_entry.pack(fill='x', padx=2, pady=2, side='left')
+        
+        special_room_rsi_entry_label = tk.Label(special_roomF, text = "매수 RSI").pack(fill='x', padx=2, pady=2, side= 'left')
+        self.special_room_rsi_entry_entry = tk.Entry(special_roomF, width=2)
+        self.special_room_rsi_entry_entry.pack(fill='x', padx=2, pady=2 , side= 'left')
+
+        special_room_rsi_close_label = tk.Label(special_roomF, text = "매도 RSI").pack(fill='x', padx=2, pady=2, side= 'left')
+        self.special_room_rsi_close_entry = tk.Entry(special_roomF, width=2)
+        self.special_room_rsi_close_entry.pack(fill='x', padx=2, pady=2 , side= 'left')
+
+        special_room_count_label = tk.Label(special_roomF, text = "횟수").pack(fill='x', padx=2, pady=2, side= 'left')
+        self.special_room_count_entry = tk.Entry(special_roomF, width=1)
+        self.special_room_count_entry.pack(fill='x', padx=2, pady=2 , side= 'left')
+
+        special_room_count_time_label = tk.Label(special_roomF, text='딜레이 시간').pack(fill='x', padx=2, pady=2, side= 'left')
+        special_room_count_time_list = [40,50,60,70,80]
+        self.special_room_count_time_combobox = ttk.Combobox(special_roomF, width=3,values=special_room_count_time_list,state='readonly')
+        self.special_room_count_time_combobox.pack(fill='x', padx=2, pady=2, side='left')
+        self.special_room_count_time_combobox.current(1)
+
+        
+        def special_room_check():
+            self.special_room_is_auto = special_is_auto.get()
+
+        special_is_auto = tk.IntVar()
+
+        autobutton = tk.Radiobutton(special_roomF, text="시작", value=0, variable=special_is_auto, command=special_room_check)
+        autobutton.pack(fill='x', padx=2, pady=2, side= 'left')
+
+        nonautobutton = tk.Radiobutton(special_roomF, text="중지", value=1, variable=special_is_auto, command=special_room_check)
+        nonautobutton.pack(fill='x', padx=2, pady=2, side= 'left')
+        nonautobutton.invoke()
+        """
 if __name__ == "__main__":
     root = tk.Tk()
     app = App(root)

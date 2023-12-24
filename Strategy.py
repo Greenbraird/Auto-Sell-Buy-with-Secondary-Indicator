@@ -49,7 +49,7 @@ def strategy_buy_RSI_and_EMA(upbit,bitcoin,delay_buy_time,entry_bong,entry_rsi,b
             upbit.buy_market_order(bitcoin,buy_price)
             delay_buy_time = int(time.time()) + delay_time*60
             buy_count += 1
-            buy_log = time.strftime('%H:%M:%S',time.localtime()) + ' ' + bitcoin + ' ' + 'RSI:'+ ' ' + str(buy_now_rsi) + ' ' +'매수 횟수:'+ ' ' + str(buy_count)+ ' ' + '매수되었습니다.\n'
+            buy_log = time.strftime('%H:%M:%S',time.localtime()) + ' ' + bitcoin +' ' + entry_bong +' ' + 'RSI:'+ ' ' + str(buy_now_rsi) + ' ' +'매수 횟수:'+ ' ' + str(buy_count)+ ' ' + '매수되었습니다.\n'
             log_panel.insert(tk.END,buy_log)
     
     return delay_buy_time, buy_count
@@ -107,12 +107,12 @@ def strategy_sell_RSI_and_EMA(upbit,bitcoin,delay_buy_time,close_bong,close_rsi,
             #close_rsi값 crossover시 25% 판매
             if sell_now_rsi > close_rsi and sell_befer_rsi< close_rsi and is_benefit and upbit.get_balance(bitcoin)*pyupbit.get_current_price(bitcoin) > 10000:
                 upbit.sell_market_orde(upbit,upbit.get_balance(bitcoin)/4)
-                sell_log = time.strftime('%H:%M:%S',time.localtime())+' '+ bitcoin+' '+ 'RSI' +' '+ str(close_rsi) +' '+ '상승장에서 25% 판매되었습니다.\n'
+                sell_log = time.strftime('%H:%M:%S',time.localtime())+' '+ bitcoin+ ' ' +close_bong +' '+ 'RSI' +' '+ str(close_rsi) +' '+ '상승장에서 25% 판매되었습니다.\n'
                 log_panel.insert(tk.END,sell_log)
             #close_rsi + 3 값 crossover시 33% 판매    
             elif sell_now_rsi > close_rsi + 3 and sell_befer_rsi< close_rsi + 3 and is_benefit and upbit.get_balance(bitcoin)*pyupbit.get_current_price(bitcoin) > 10000:
                 upbit.sell_market_orde(upbit,upbit.get_balance(bitcoin)/3)
-                sell_log = time.strftime('%H:%M:%S',time.localtime())+' '+ bitcoin+' '+ 'RSI' +' '+ str(close_rsi+3) +' '+ '상승장에서 33% 판매되었습니다.\n'
+                sell_log = time.strftime('%H:%M:%S',time.localtime())+' '+ bitcoin+' ' +close_bong +' '+ 'RSI' +' '+ str(close_rsi+3) +' '+ '상승장에서 33% 판매되었습니다.\n'
                 log_panel.insert(tk.END,sell_log)
 
         elif sell_is_bull_market == False:
@@ -122,12 +122,12 @@ def strategy_sell_RSI_and_EMA(upbit,bitcoin,delay_buy_time,close_bong,close_rsi,
         elif sell_is_bull_market == None:
             if sell_now_rsi > close_rsi and is_benefit and upbit.get_balance(bitcoin)*pyupbit.get_current_price(bitcoin) > 10000:
                 upbit.sell_market_orde(upbit,upbit.get_balance(bitcoin)/2)
-                sell_log = time.strftime('%H:%M:%S',time.localtime())+' '+ bitcoin+' '+ 'RSI' +' '+ str(close_rsi) +' '+ '추세가 결정되지 않은 장에서 50% 판매되었습니다.\n'
+                sell_log = time.strftime('%H:%M:%S',time.localtime())+' '+ bitcoin+' ' +close_bong +' '+ 'RSI' +' '+ str(close_rsi) +' '+ '추세가 결정되지 않은 장에서 50% 판매되었습니다.\n'
                 log_panel.insert(tk.END,sell_log)
 
         if sell_delat100 < 0 and is_benefit:
             upbit.sell_market_orde(upbit,upbit.get_balance(bitcoin)/4)
-            sell_log = time.strftime('%H:%M:%S',time.localtime())+' '+ bitcoin+' '+ '하락장에서 반등하여 25% 판매되었습니다.\n'
+            sell_log = time.strftime('%H:%M:%S',time.localtime())+' '+ bitcoin+' ' +close_bong +' '+ '하락장에서 반등하여 25% 판매되었습니다.\n'
             log_panel.insert(tk.END,sell_log)
 
         #완전 매도 밎 초기화 진행
@@ -135,7 +135,7 @@ def strategy_sell_RSI_and_EMA(upbit,bitcoin,delay_buy_time,close_bong,close_rsi,
             upbit.sell_market_order(bitcoin, upbit.get_balance(bitcoin))
             buy_count = 0
             delay_buy_time = int(time.time())
-            sell_log = time.strftime('%H:%M:%S',time.localtime())+' '+ bitcoin+' '+ 'SMA10과 SMA30 crossunder 판매되었습니다.\n'
+            sell_log = time.strftime('%H:%M:%S',time.localtime())+' '+ bitcoin+' ' +close_bong +' '+ 'SMA10과 SMA30 crossunder 판매되었습니다.\n'
             log_panel.insert(tk.END,sell_log)
     
     return  delay_buy_time, buy_count

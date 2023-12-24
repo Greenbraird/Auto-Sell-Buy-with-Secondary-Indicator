@@ -131,7 +131,7 @@ def strategy_sell_RSI_and_EMA(upbit,bitcoin,delay_buy_time,close_bong,close_rsi,
             log_panel.insert(tk.END,sell_log)
 
         #완전 매도 밎 초기화 진행
-        if sell_delat1030 < 0 and before_delat1030 > 0 and sell_delat100< 0: 
+        if sell_delat1030 < 0 and before_delat1030 > 0 : 
             upbit.sell_market_order(bitcoin, upbit.get_balance(bitcoin))
             buy_count = 0
             delay_buy_time = int(time.time())

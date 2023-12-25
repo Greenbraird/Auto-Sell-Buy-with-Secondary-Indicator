@@ -12,11 +12,13 @@ class App:
         self.creat_title_frame()
         self.creat_debuging_panel()
         self.creat_head_frame()
-        self.creat_body_frame()
         self.checkboxes = {}
         self.restore_coin_list = []
-        #['KRW-XRP','KRW-BTC','KRW-SOL','KRW-BCH','KRW-ADA','KRW-STMX','KRW-ETC','KRW-STPT','KRW-STEEM','KRW-SBD','KRW-MLK','KRW-GAS','KRW-GRS','KRW-STRK','KRW-HIFI','KRW-BLUR','KRW-STRAX','KRW-ARK','KRW-GRT','KRW-DOGE','KRW-SAND']
-        self.bitcoinlist = pyupbit.get_tickers(fiat="KRW")[:50]
+        self.bitcoinlist = ['KRW-BTC', 'KRW-ETH', 'KRW-NEO', 'KRW-MTL', 'KRW-XRP', 'KRW-ETC', 'KRW-T', 'KRW-AVAX', 'KRW-XEM', 'KRW-STRAX', 
+                            'KRW-LSK', 'KRW-SXP', 'KRW-FCT2', 'KRW-ARDR', 'KRW-ARK', 'KRW-STORJ', 'KRW-GRS', 'KRW-ADA', 'KRW-SBD', 'KRW-POWR',
+                            'KRW-BTG', 'KRW-HIVE', 'KRW-HPO', 'KRW-AHT', 'KRW-SC', 'KRW-DOGE', 'KRW-STPT', 'KRW-EGLD', 'KRW-ZRX', 'KRW-META', 
+                            'KRW-BCH', 'KRW-SOL', 'KRW-AERGO', 'KRW-CVC', 'KRW-IMX', 'KRW-IOTA', 'KRW-HIFI', 'KRW-ONG', 'KRW-GAS', 'KRW-UPP', 
+                            'KRW-ELF', 'KRW-KNC', 'KRW-AXS', 'KRW-TT', 'KRW-QKC', 'KRW-BTT', 'KRW-MOC', 'KRW-TFUEL', 'KRW-SAND', 'KRW-ANKR']
         self.except_bitcoin = []
         self.first_room_bitcoin_dict = {}
         self.second_room_bitcoin_dict = {}
@@ -36,11 +38,10 @@ class App:
         #백그라운드 스레드 생성
         self.background_thread = threading.Thread(target=self.buy_start_strategy)
         self.background_thread.daemon = True  # 메인 스레드가 종료되면 백그라운드 스레드도 종료되도록 설정
-        self.background_thread.start()
 
         self.background_thread2 = threading.Thread(target=self.sell_start_strategy)
         self.background_thread2.daemon = True  # 메인 스레드가 종료되면 백그라운드 스레드도 종료되도록 설정
-        self.background_thread2.start()
+        
 
         self.background_thread3 = threading.Thread(target=self.checking_bitcoin)
         self.background_thread3.daemon = True
@@ -124,6 +125,27 @@ class App:
 
     def buy_start_strategy(self):
         while True:
+            if self.special_room_is_auto == 0:
+                self.special_room_label.configure(bg='green')
+                if int(time.strftime('%M', time.localtime())) % int(self.special_room_bong_entry_combobox.get()[6:]) == 0:
+                    self.special_room_rsi_entry_entry.config(state='readonly')
+                    self.special_room_price_entry.config(state='readonly')
+
+                    self.special_room_delay_time, self.special_room_count = Strategy.strategy_buy_RSI_and_EMA (
+                        self.upbit,
+                        "KRW-SBD",
+                        self.special_room_delay_time,
+                        self.special_room_bong_entry_combobox.get(),
+                        int(self.special_room_rsi_entry_entry.get()),
+                        self.special_room_count,
+                        int(self.special_room_price_entry.get())/4,
+                        self.special_room_count_entry,
+                        self.special_room_count_time_list[self.special_room_count],
+                        self.debug_panel
+                    )
+            else:
+                self.special_room_rsi_close_entry.config(state='normal')
+                self.special_room_label.configure(bg='yellow')
 
             self.buy_process_room(self.fourth_room_label, self.fourth_room_is_auto, self.fourth_room_bong_entry_combobox,
                                self.fourth_room_price_entry, self.fourth_room_count_entry,self.fourth_room_rsi_entry_entry,
@@ -158,7 +180,7 @@ class App:
                             bong_close_combobox.get(),
                             int(rsi_close_entry.get()),
                             bitcoin_dict[coin]['buy_count'],
-                            log_panel,
+                            log_panel
                     )
             else:
                 rsi_close_entry.config(state='normal')
@@ -177,6 +199,23 @@ class App:
 
             self.sell_process_room(self.fourth_room_label, self.fourth_room_is_auto, self.fourth_room_bong_close_combobox,
                                 self.fourth_room_rsi_close_entry, self.fourth_room_bitcoin_dict,self.debug_panel)
+            
+            if self.special_room_is_auto == 0:
+                self.special_room_label.configure(bg='green')
+                if int(time.strftime('%M', time.localtime())) % int(self.special_room_bong_close_combobox.get()[6:]) == 0:
+                    self.special_room_rsi_close_entry.config(state='readonly')
+                    self.special_room_delay_time, self.special_room_count = Strategy.strategy_sell_RSI_and_EMA (
+                        self.upbit,
+                        "KRW-SBD",
+                        self.special_room_delay_time,
+                        self.special_room_bong_close_combobox.get(),
+                        int(self.special_room_rsi_close_entry.get()),
+                        self.special_room_count,
+                        self.debug_panel
+                    )
+            else:
+                self.special_room_rsi_close_entry.config(state='normal')
+                self.special_room_label.configure(bg='yellow')
 
             time.sleep(1)
 
@@ -198,7 +237,6 @@ class App:
         self.new_window = tk.Toplevel(self.root)
         self.new_window.title('coin창')
     
-
         Cbcolumn = 0
         Cbrow = 8
         Chkcount = 0
@@ -224,12 +262,17 @@ class App:
         print_cbox_button = tk.Button(self.new_window, text='적용', command=self.get_checked_boxes)
         print_cbox_button.grid(row=20, column=0, columnspan=5)
 
-    def get_balance(self):
+    def login(self):
         self.upbit = pyupbit.Upbit(self.access_entry.get(), self.secret_entry.get())
         self.balance_label.config(text = self.upbit.get_balance("KRW"))
-        self.background_thread3.start()
+        
         log = time.strftime('%H:%M:%S',time.localtime()) + ' ' + '로그인이 완료 되었습니다.\n'
         self.debug_panel.insert(tk.END,log)
+        self.creat_body_frame()
+
+        self.background_thread.start()
+        self.background_thread2.start()
+        self.background_thread3.start()
 
     def creat_title_frame(self):
 
@@ -269,7 +312,7 @@ class App:
 
         self.balance_label = tk.Label(headF, text='0')
         self.balance_label.pack(fill='x', padx=2, pady=2, side="right")
-        get_balance_btn = tk.Button(headF, text='로그인', command=self.get_balance)
+        get_balance_btn = tk.Button(headF, text='로그인', command=self.login)
         get_balance_btn.pack(fill='x', padx=2, pady=2, side="right")
 
 
@@ -320,7 +363,7 @@ class App:
         first_room_count_time_list = [40,50,60,70,80]
         self.first_room_count_time_combobox = ttk.Combobox(first_roomF, width=3,values=first_room_count_time_list,state='readonly')
         self.first_room_count_time_combobox.pack(fill='x', padx=2, pady=2, side='left')
-        self.first_room_count_time_combobox.current(1)
+        self.first_room_count_time_combobox.current(0)
 
         
         def first_room_check():
@@ -377,7 +420,7 @@ class App:
         second_room_count_time_list = [60,80,100,120,150]
         self.second_room_count_time_combobox = ttk.Combobox(second_roomF, width=3,values=second_room_count_time_list,state='readonly')
         self.second_room_count_time_combobox.pack(fill='x', padx=2, pady=2, side='left')
-        self.second_room_count_time_combobox.current(2)
+        self.second_room_count_time_combobox.current(0)
 
         
         def second_room_check():
@@ -433,7 +476,7 @@ class App:
         third_room_count_time_list = [60,120,180,240]
         self.third_room_count_time_combobox = ttk.Combobox(third_roomF, width=3,values=third_room_count_time_list,state='readonly')
         self.third_room_count_time_combobox.pack(fill='x', padx=2, pady=2, side='left')
-        self.third_room_count_time_combobox.current(1)
+        self.third_room_count_time_combobox.current(0)
 
         
         def third_room_check():
@@ -448,11 +491,10 @@ class App:
         nonautobutton.pack(fill='x', padx=2, pady=2, side= 'left')
         nonautobutton.invoke()
 
-
-
         #--------------------------------
         #----------fourth----------------
         #--------------------------------
+        
         fourth_roomF = tk.Frame(bodyF, relief='solid', bd=2)
         fourth_roomF.pack(fill='x', padx=2, pady=2)
 
@@ -509,7 +551,7 @@ class App:
 
         bodyF = tk.Frame(self.root, bd=2)
         bodyF.pack(fill='x', padx=2, pady=2)
-        """
+
         #--------------------------------
         #----------Special frame---------
         #--------------------------------
@@ -522,7 +564,7 @@ class App:
 
 
         special_room_bong_entry_lable = tk.Label(special_roomF, text = "매수 분봉").pack(fill='x', padx=2, pady=2, side='left')
-        min_bong_combobox_values = ['minute1','minute3','minute5']
+        min_bong_combobox_values = ['minute1','minute3','minute5','minute10']
         self.special_room_bong_entry_combobox = ttk.Combobox(special_roomF,width=10,values=min_bong_combobox_values,state='readonly')
         self.special_room_bong_entry_combobox.pack(fill='x', padx=2, pady=2, side='left')
         self.special_room_bong_entry_combobox.current(1)
@@ -545,16 +587,15 @@ class App:
         self.special_room_rsi_close_entry.pack(fill='x', padx=2, pady=2 , side= 'left')
 
         special_room_count_label = tk.Label(special_roomF, text = "횟수").pack(fill='x', padx=2, pady=2, side= 'left')
-        self.special_room_count_entry = tk.Entry(special_roomF, width=1)
-        self.special_room_count_entry.pack(fill='x', padx=2, pady=2 , side= 'left')
+        special_room_count_entry = tk.Label(special_roomF, text = "4")
+        special_room_count_entry.pack(fill='x', padx=2, pady=2, side= 'left')
+        self.special_room_count_entry = int(special_room_count_entry['text'])
 
-        special_room_count_time_label = tk.Label(special_roomF, text='딜레이 시간').pack(fill='x', padx=2, pady=2, side= 'left')
-        special_room_count_time_list = [40,50,60,70,80]
-        self.special_room_count_time_combobox = ttk.Combobox(special_roomF, width=3,values=special_room_count_time_list,state='readonly')
-        self.special_room_count_time_combobox.pack(fill='x', padx=2, pady=2, side='left')
-        self.special_room_count_time_combobox.current(1)
+        self.special_room_count_time_list = [10,20,30,50]
 
-        
+        self.special_room_count = 0
+        self.special_room_delay_time = 0
+
         def special_room_check():
             self.special_room_is_auto = special_is_auto.get()
 
@@ -566,7 +607,7 @@ class App:
         nonautobutton = tk.Radiobutton(special_roomF, text="중지", value=1, variable=special_is_auto, command=special_room_check)
         nonautobutton.pack(fill='x', padx=2, pady=2, side= 'left')
         nonautobutton.invoke()
-        """
+       
 if __name__ == "__main__":
     root = tk.Tk()
     app = App(root)

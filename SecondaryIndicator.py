@@ -8,8 +8,12 @@ pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
 
 def SMA(bitcoin = "KRW-BTC", bong = 'minute1'):
-    df = pyupbit.get_ohlcv(bitcoin, bong, count=102)[['close']]
 
+    try:
+        df = pyupbit.get_ohlcv(bitcoin, bong, count=102)[['close']]
+    except:
+        df = pyupbit.get_ohlcv(bitcoin,period='minute240',count=102)['close']
+    
     #단순이동평균선 10 
     df["MA10"] = round(df['close'].rolling(window=10).mean(),5)
 

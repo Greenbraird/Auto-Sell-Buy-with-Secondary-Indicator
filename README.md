@@ -2,8 +2,13 @@
 
 Python Auto Sell and Buy for Upbit Api
 
-version : 2.1.0
-<br>2.1.0 추가된 기능
+version : 3.0.0
+
+<br>3.0.0 변경사항
+
+1. 방에 따라 Thread를 분할 하여서 정확도를 높임
+
+<br>2.1.0 변경사항
 
 1. 손절기능(기본적으로 그 라인에서 사졌을 때만 작동)
 ex. SOL-KRW가 1번방에는 사졌고 3번방에서는 안 사졌으면
@@ -20,6 +25,7 @@ ex. SOL-KRW가 1번방에는 사졌고 3번방에서는 안 사졌으면
 0.3%이상 반등하서 올라가면 가지고 있는 코인에 25%를 매도
 
 5. 코인 갯수 50개까지 증가
+
 
 
 ## Documentation
@@ -86,8 +92,3 @@ main을 실행하면 위와 같이 두개의 창이 나오게 되는데 하는 �
 ![스크린샷 2023-11-28 003943](https://github.com/Greenbraird/Auto-Sell-Buy-with-Secondary-Indicator/assets/87434273/356e8f15-67f0-4f85-b8a4-98d85d94bf75)
 
 coin list 창에서 유동적으로 관리 할 수 있습니다.
-
-## 추가되어야 할 기능
-1. 전날 높은 상승장으로 마감한 종목들은 하락을 대비해 잠시 자동 거래에서 제외
-2. 비 로그인시 자동을 돌렸을 때 팅기는 문제 해결
-3. SecondaryIndicator.py 더 많은 지표 값 추가하기

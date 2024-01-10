@@ -146,11 +146,13 @@ def strategy_sell_RSI_and_EMA(upbit,bitcoin,delay_buy_time,close_bong,close_rsi,
             log_panel.insert(tk.END,sell_log)
 
         #스탑로스 후 초기화 진행
+        '''
         if stop_loss:
             upbit.sell_market_order(bitcoin, upbit.get_balance(bitcoin))
             buy_count = 0;delay_buy_time = 0
             sell_log = time.strftime('%H:%M:%S',time.localtime())+' '+ bitcoin+' ' +close_bong +' '+ '-1% 손절 판매되었습니다.\n'
             log_panel.insert(tk.END,sell_log)
+        '''
 
     print(time.strftime('%H:%M:%S',time.localtime()),'매도', bitcoin, close_bong)
 
